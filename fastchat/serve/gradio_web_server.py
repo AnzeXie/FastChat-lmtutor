@@ -42,6 +42,11 @@ from fastchat.utils import (
     parse_gradio_auth_creds,
 )
 
+# from .llm_langchain_tutor import LLMLangChainTutor
+# lmtutor = LLMLangChainTutor(embedding='instruct_embedding', device='cuda')
+# lmtutor.load_document(doc_path="/home/yuheng/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
+# lmtutor.generate_vector_store()
+
 
 logger = build_logger("gradio_web_server", "gradio_web_server.log")
 
@@ -202,6 +207,8 @@ def clear_history(request: gr.Request):
 
 def add_text(state, model_selector, text, request: gr.Request):
     ip = request.client.host
+    # print(text)
+    
     logger.info(f"add_text. ip: {ip}. len: {len(text)}")
 
     if state is None:
@@ -232,6 +239,9 @@ def add_text(state, model_selector, text, request: gr.Request):
         return (state, state.to_gradio_chatbot(), CONVERSATION_LIMIT_MSG) + (
             no_change_btn,
         ) * 5
+    
+    # retrieved_docs = lmtutor.similarity_search(text)
+    # text = f"Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {text}"
 
     text = text[:INPUT_CHAR_LEN_LIMIT]  # Hard cut-off
     conv.append_message(conv.roles[0], text)
