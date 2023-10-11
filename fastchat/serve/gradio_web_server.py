@@ -174,6 +174,21 @@ def vote_last_response(state, vote_type, model_selector, request: gr.Request):
         }
         fout.write(json.dumps(data) + "\n")
 
+def record_last_user_submission(state, user_id, user_text, request: gr.Request):
+    with open(get_conv_log_filename(), "a") as fout:
+        data = {
+            "tstamp": round(time.time(), 4),
+            'user_id': user_id, #PID
+            'user_text': user_text,
+            "state": state.dict(),
+            "ip": request.client.host,
+        }
+        fout.write(json.dumps(data) + "\n")
+    
+    logger.info(f"user submitted an answer. ip: {request.client.host}")
+
+    return "", ""
+
 
 def upvote_last_response(state, model_selector, request: gr.Request):
     logger.info(f"upvote. ip: {request.client.host}")
@@ -509,13 +524,13 @@ def build_single_model_ui(models, add_promotion_links=False):
     )
 
     notice_markdown = f"""
-# 🏔️ Chat with Open Large Language Models
-{promotion}
+# 🤖 LMTutor for DSC250 Advanced Data Mining
+Wecome to use LMTutor for answering your questions. You can ask it about the questions in the course material, logistics, etc. No need to wait for the TA's response! LMTutor answers your question within seconds!
+### How to use
+It's easy. Just type your questions in the chatbox below and have a conversation with it just like you are talking to the TA.
 
-### Terms of use
-By using this service, users are required to agree to the following terms: The service is a research preview intended for non-commercial use only. It only provides limited safety measures and may generate offensive content. It must not be used for any illegal, harmful, violent, racist, or sexual purposes. **The service collects user dialogue data and reserves the right to distribute it under a Creative Commons Attribution (CC-BY) license.**
-
-### Choose a model to chat with
+### What we need
+All we need is your comment on LMTutor's response. Please tell me how LMTutor did by clicking on 'upvote', 'downvote' or 'flag'. If the answer is not expected, you can write your own and let us know by submitting it using the second chatbox.
 """
 
     state = gr.State()
@@ -547,6 +562,24 @@ By using this service, users are required to agree to the following terms: The s
             )
         with gr.Column(scale=1, min_width=50):
             send_btn = gr.Button(value="Send", visible=False)
+
+    with gr.Row():
+        with gr.Column(scale=20):
+            textbox_report = gr.Textbox(
+                show_label=False,
+                placeholder="Enter text and press ENTER",
+                visible=False,
+                container=False,
+            )
+        with gr.Column(scale=5):
+            textbox_report_pid = gr.Textbox(
+                show_label=False,
+                placeholder="Enter your PID",
+                visible=False,
+                container=False,
+            )
+        with gr.Column(scale=1, min_width=50):
+            send_btn_report = gr.Button(value="Send", visible=False)
 
     with gr.Row(visible=False) as button_row:
         upvote_btn = gr.Button(value="👍  Upvote", interactive=False)
@@ -623,13 +656,52 @@ By using this service, users are required to agree to the following terms: The s
         [state, temperature, top_p, max_output_tokens],
         [state, chatbot] + btn_list,
     )
+    
+    # textbox_report.submit(
+    #     record_last_user_submission,
+    #     [state, textbox_report_pid, textbox_report],
+    #     [textbox_report_pid, textbox_report]
+    # )
+    # textbox_report_pid.submit(
+    #     record_last_user_submission,
+    #     [state, textbox_report_pid, textbox_report],
+    #     [textbox_report_pid, textbox_report]
+    # )
+    # send_btn_report.click(
+    #     record_last_user_submission,
+    #     [state, textbox_report_pid, textbox_report],
+    #     [textbox_report_pid, textbox_report]
+    # )
 
-    return state, model_selector, chatbot, textbox, send_btn, button_row, parameter_row
+    textbox_report.submit(
+        add_text, [state, model_selector, textbox], [state, chatbot, textbox] + btn_list
+    ).then(
+        bot_response,
+        [state, temperature, top_p, max_output_tokens],
+        [state, chatbot] + btn_list,
+    )
+    textbox_report_pid.submit(
+        add_text, [state, model_selector, textbox], [state, chatbot, textbox] + btn_list
+    ).then(
+        bot_response,
+        [state, temperature, top_p, max_output_tokens],
+        [state, chatbot] + btn_list,
+    )
+    
+    send_btn_report.click(
+        add_text, [state, model_selector, textbox], [state, chatbot, textbox] + btn_list
+    ).then(
+        bot_response,
+        [state, temperature, top_p, max_output_tokens],
+        [state, chatbot] + btn_list,
+    )
+
+    return state, model_selector, chatbot, textbox, send_btn, button_row, parameter_row, textbox_report_pid, textbox_report, send_btn_report
 
 
 def build_demo(models):
     with gr.Blocks(
-        title="Chat with Open Large Language Models",
+        title="LMTutor for DSC250 Advanced Data Mining",
         theme=gr.themes.Base(),
         css=block_css,
     ) as demo:
@@ -643,6 +715,7 @@ def build_demo(models):
             send_btn,
             button_row,
             parameter_row,
+            textbox_report_pid, textbox_report, send_btn_report
         ) = build_single_model_ui(models)
 
         if args.model_list_mode not in ["once", "reload"]:
@@ -658,6 +731,8 @@ def build_demo(models):
                 send_btn,
                 button_row,
                 parameter_row,
+                textbox_report_pid, 
+                textbox_report, send_btn_report
             ],
             _js=get_window_url_params_js,
         )
