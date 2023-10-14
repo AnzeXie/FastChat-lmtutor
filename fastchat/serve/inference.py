@@ -346,7 +346,7 @@ def chat_loop(
     conv = None
 
     lmtutor = LLMLangChainTutor(embedding='instruct_embedding', device='cuda')
-    lmtutor.load_document(doc_path="/home/yuheng/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
+    lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
     lmtutor.generate_vector_store()
 
     while True:

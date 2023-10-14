@@ -50,7 +50,7 @@ from .llm_langchain_tutor import LLMLangChainTutor
 lmtutor = LLMLangChainTutor(embedding='instruct_embedding', embed_device='cuda:0', llm_device="cuda:0")
 # lmtutor.load_document(doc_path="/home/yuheng/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
 # lmtutor.generate_vector_store()
-lmtutor.load_vector_store("/home/yuheng/LMTutor/data/DSC-291-vector")
+lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-291-vector")
 
 worker_id = str(uuid.uuid4())[:8]
 logger = build_logger("model_worker", f"model_worker_{worker_id}.log")
@@ -111,6 +111,7 @@ class BaseModelWorker:
             "worker_status": self.get_status(),
         }
         r = requests.post(url, json=data)
+        print(r.status_code)
         assert r.status_code == 200
 
     def send_heart_beat(self):

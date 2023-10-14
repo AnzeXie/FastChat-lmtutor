@@ -582,10 +582,10 @@ def build_single_model_ui(models, add_promotion_links=False):
     )
 
     notice_markdown = f"""
-# 🏔️ Chat with Open Large Language Models
-{promotion}
-
-### Choose a model to chat with
+# 🤖 LMTutor for DSC250 Advanced Data Mining
+Wecome to use LMTutor for answering your questions. You can ask it about the questions in the course material, logistics, etc. No need to wait for the TA's response! LMTutor answers your question within seconds!
+### How to use
+It's easy. Just type your questions in the chatbox below and have a conversation with it just like you are talking to the TA.
 """
 
     state = gr.State()
@@ -762,7 +762,7 @@ def build_single_model_ui(models, add_promotion_links=False):
 
 def build_demo(models):
     with gr.Blocks(
-        title="Chat with Open Large Language Models",
+        title="LMTutor for DSC250 Advanced Data Mining",
         theme=gr.themes.Default(),
         css=block_css,
     ) as demo:
