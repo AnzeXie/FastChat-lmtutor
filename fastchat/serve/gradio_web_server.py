@@ -229,31 +229,31 @@ def vote_last_response(state, vote_type, model_selector, request: gr.Request):
 def upvote_last_response(state, model_selector, request: gr.Request):
     logger.info(f"upvote. ip: {request.client.host}")
     vote_last_response(state, "upvote", model_selector, request)
-    return ("",) + (disable_btn,) * 3
+    return ("",) + (disable_btn,) * 3 + (enable_btn,)
 
 
 def downvote_last_response(state, model_selector, request: gr.Request):
     logger.info(f"downvote. ip: {request.client.host}")
     vote_last_response(state, "downvote", model_selector, request)
-    return ("",) + (disable_btn,) * 3
+    return ("",) + (disable_btn,) * 3  + (enable_btn,)
 
 
 def flag_last_response(state, model_selector, request: gr.Request):
     logger.info(f"flag. ip: {request.client.host}")
     vote_last_response(state, "flag", model_selector, request)
-    return ("",) + (disable_btn,) * 3
+    return ("",) + (disable_btn,) * 3  + (enable_btn,)
 
 
 def regenerate(state, request: gr.Request):
     logger.info(f"regenerate. ip: {request.client.host}")
     state.conv.update_last_message(None)
-    return (state, state.to_gradio_chatbot(), "") + (disable_btn,) * 6
+    return (state, state.to_gradio_chatbot(), "") + (disable_btn,) * 5
 
 
 def clear_history(request: gr.Request):
     logger.info(f"clear_history. ip: {request.client.host}")
     state = None
-    return (state, [], "") + (disable_btn,) * 6
+    return (state, [], "") + (disable_btn,) * 5
 
 
 def add_text(state, model_selector, text, request: gr.Request):
@@ -265,12 +265,12 @@ def add_text(state, model_selector, text, request: gr.Request):
 
     if len(text) <= 0:
         state.skip_next = True
-        return (state, state.to_gradio_chatbot(), "") + (no_change_btn,) * 6
+        return (state, state.to_gradio_chatbot(), "") + (no_change_btn,) * 5
 
     if ip_expiration_dict[ip] < time.time():
         logger.info(f"inactive. ip: {request.client.host}. text: {text}")
         state.skip_next = True
-        return (state, state.to_gradio_chatbot(), INACTIVE_MSG) + (no_change_btn,) * 6
+        return (state, state.to_gradio_chatbot(), INACTIVE_MSG) + (no_change_btn,) * 5
 
     if enable_moderation:
         flagged = violates_moderation(text)
@@ -279,7 +279,7 @@ def add_text(state, model_selector, text, request: gr.Request):
             state.skip_next = True
             return (state, state.to_gradio_chatbot(), MODERATION_MSG) + (
                 no_change_btn,
-            ) * 6
+            ) * 5
 
     conv = state.conv
     if (len(conv.messages) - conv.offset) // 2 >= CONVERSATION_TURN_LIMIT:
@@ -287,12 +287,12 @@ def add_text(state, model_selector, text, request: gr.Request):
         state.skip_next = True
         return (state, state.to_gradio_chatbot(), CONVERSATION_LIMIT_MSG) + (
             no_change_btn,
-        ) * 6
+        ) * 5
 
     text = text[:INPUT_CHAR_LEN_LIMIT]  # Hard cut-off
     conv.append_message(conv.roles[0], text)
     conv.append_message(conv.roles[1], None)
-    return (state, state.to_gradio_chatbot(), "") + (disable_btn,) * 6
+    return (state, state.to_gradio_chatbot(), "") + (disable_btn,) * 5
 
 
 def post_process_code(code):
@@ -354,7 +354,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
     if state.skip_next:
         # This generate call is skipped due to invalid inputs
         state.skip_next = False
-        yield (state, state.to_gradio_chatbot()) + (no_change_btn,) * 6
+        yield (state, state.to_gradio_chatbot()) + (no_change_btn,) * 5
         return
 
     conv, model_name = state.conv, state.model_name
@@ -403,7 +403,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
                 disable_btn,
                 enable_btn,
                 enable_btn,
-                enable_btn,
+                # disable_btn,
             )
             return
 
@@ -429,7 +429,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
         )
 
     conv.update_last_message("▌")
-    yield (state, state.to_gradio_chatbot()) + (disable_btn,) * 6
+    yield (state, state.to_gradio_chatbot()) + (disable_btn,) * 5
 
     try:
         for i, data in enumerate(stream_iter):
@@ -438,7 +438,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
                     continue
                 output = data["text"].strip()
                 conv.update_last_message(output + "▌")
-                yield (state, state.to_gradio_chatbot()) + (disable_btn,) * 6
+                yield (state, state.to_gradio_chatbot()) + (disable_btn,) * 5
             else:
                 output = data["text"] + f"\n\n(error_code: {data['error_code']})"
                 conv.update_last_message(output)
@@ -448,14 +448,14 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
                     disable_btn,
                     enable_btn,
                     enable_btn,
-                    enable_btn,
+                    # disable_btn,
                 )
                 return
         output = data["text"].strip()
         if "vicuna" in model_name:
             output = post_process_code(output)
         conv.update_last_message(output)
-        yield (state, state.to_gradio_chatbot()) + (enable_btn,) * 6
+        yield (state, state.to_gradio_chatbot()) + (enable_btn,) * 5
     except requests.exceptions.RequestException as e:
         conv.update_last_message(
             f"{SERVER_ERROR_MSG}\n\n"
@@ -467,7 +467,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
             disable_btn,
             enable_btn,
             enable_btn,
-            enable_btn,
+            # disable_btn,
         )
         return
     except Exception as e:
@@ -481,7 +481,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
             disable_btn,
             enable_btn,
             enable_btn,
-            enable_btn,
+            # disable_btn,
         )
         return
 
@@ -585,15 +585,22 @@ def build_single_model_ui(models, add_promotion_links=False):
 # 🤖 LMTutor for DSC250 Advanced Data Mining
 Wecome to use LMTutor for answering your questions. You can ask it about the questions in the course material, logistics, etc. No need to wait for the TA's response! LMTutor answers your question within seconds!
 ### How to use
--- It's easy. Just type your questions in the chatbox below and have a conversation with it just like you are talking to the TA.
--- Based on the answers provided by LMTutor, you can ask follow-up questions or start a new conversation.
--- Based on how satisfied you are with the answer, you can choose to either upvote, downvote or flag (for toxic answers) the answers generated by LMTutor. Make sure to do this step with honesty and integrity as your responses will help us improve LMTutor for you as well as your peers.
+* It's easy. Just type your questions in the chatbox below and have a conversation with it just like you are talking to the TA.
+* Based on the answers provided by LMTutor, you can ask follow-up questions or start a new conversation.
+* Based on how satisfied you are with the answer, you can choose to either upvote, downvote or flag (for toxic answers) the answers generated by LMTutor. Make sure to do this step with honesty and integrity as your responses will help us improve LMTutor for you as well as your peers.
 
 ### Help the AI Tutor Grow: Your Contribution
--- After having a conversation with LMTutor (that started with a question that you asked it), if you feel that the answer you received is incorrect or inaccurate, you can use your initial question as a submission.
--- First make a vote to the question. Then try to find and compile an answer to your original question using the Internet, help from your peers or instructors and submit it in the textbox under the chatbot along with your name and PID and a brief explanation for why your answer is better than the ones generated by LMTutor.
--- Please DO NOT refresh the page or conversation with the chatbot before submitting your answer.
--- That's it! LMTutor will record your conversation history, your details and the answer you submitted, after which someone will evaluate your submission.
+* After having a conversation with LMTutor (that started with a question that you asked it), if you feel that the answer you received is incorrect or inaccurate, you can use your initial question as a submission.
+* First make a vote to the question. Then try to find and compile an answer to your original question using the Internet, help from your peers or instructors and submit it in the textbox under the chatbot along with your name and PID and a brief explanation for why your answer is better than the ones generated by LMTutor.
+* Please DO NOT refresh the page or conversation with the chatbot before submitting your answer.
+* That's it! LMTutor will record your conversation history, your details and the answer you submitted, after which someone will evaluate your submission.
+### If you encounter any issue or bug, please contact us:
+* Hao Zhang: haozhang at ucsd.edu 
+* Pushkar Bhuse: pbhuse at ucsd.edu
+* Yuheng Zha: yzha at ucsd.edu 
+* Tiffany Yu: z5yu at ucsd.edu
+* Anze Xie: a1xie at ucsd.edu 
+* Licheng Hu: l2hu at ucsd.edu
 """
 
     state = gr.State()
@@ -644,7 +651,7 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
     with gr.Row():
         user_reason = gr.Textbox(
             show_label=False,
-            placeholder="Enter your reason",
+            placeholder="Enter your expalanation",
             container=False,
             elem_id="input_box",
         )
@@ -664,7 +671,7 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
                 container=False,
                 elem_id="input_box",
             )
-        with gr.Column(scale=1, min_width=50):
+        with gr.Column(scale=5, min_width=50):
             user_submit_btn = gr.Button(value="Submit report", variant="primary", interactive=False)
 
     with gr.Accordion("Parameters", open=False) as parameter_row:
@@ -723,21 +730,21 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
         [state, user_submit_btn],
     )
 
-    btn_list = [upvote_btn, downvote_btn, flag_btn, regenerate_btn, clear_btn, user_submit_btn]
+    btn_list = [upvote_btn, downvote_btn, flag_btn, regenerate_btn, clear_btn]
     upvote_btn.click(
         upvote_last_response,
         [state, model_selector],
-        [textbox, upvote_btn, downvote_btn, flag_btn],
+        [textbox, upvote_btn, downvote_btn, flag_btn, user_submit_btn],
     )
     downvote_btn.click(
         downvote_last_response,
         [state, model_selector],
-        [textbox, upvote_btn, downvote_btn, flag_btn],
+        [textbox, upvote_btn, downvote_btn, flag_btn, user_submit_btn],
     )
     flag_btn.click(
         flag_last_response,
         [state, model_selector],
-        [textbox, upvote_btn, downvote_btn, flag_btn],
+        [textbox, upvote_btn, downvote_btn, flag_btn, user_submit_btn],
     )
     regenerate_btn.click(regenerate, state, [state, chatbot, textbox] + btn_list).then(
         bot_response,
