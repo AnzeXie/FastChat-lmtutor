@@ -188,6 +188,17 @@ def load_demo(url_params, request: gr.Request):
 
 def take_user_feedback(state, user_answer, user_reason, user_name, user_PID, model_selector, request: gr.Request):
     logger.info(f"take_user_feedback. ip: {request.client.host}")
+    
+    if len(user_PID) <= 0:
+        raise gr.Error("Please enter PID.")
+    
+    if len(user_name) <= 0:
+        raise gr.Error("Please enter name.")
+    
+    if len(user_answer) <= 0 and len(user_reason) <= 0:
+        raise gr.Error("Please enter answer or reason.")
+    
+    
     # save user feedback
     with open(get_conv_log_filename(), "a") as fout:
         data = {
@@ -202,22 +213,23 @@ def take_user_feedback(state, user_answer, user_reason, user_name, user_PID, mod
             "user_PID": user_PID,
         }
         fout.write(json.dumps(data) + "\n")
+    gr.Info("Feedback submitted. Thank you!")
 
     return state, disable_btn
 
-def activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request: gr.Request):
-    logger.info(f"activate_user_submit_btn. ip: {request.client.host}")
-    if state is not None:
-        # if len(user_answer) <= 0 or len(user_reason) <= 0 or len(user_name) <= 0 or len(user_PID) <= 0:  # nothing entered
-        #     return no_change_btn
-        if len(user_name) > 0 and len(user_PID) > 0 and len(user_answer) > 0:  # entered user_name, user_PID, user_answer
-            return enable_btn
-        elif len(user_name) > 0 and len(user_PID) > 0 and len(user_reason) > 0 : # entered user_name, user_PID, user_reason
-            return enable_btn
-        else:
-            return no_change_btn
-    else:
-        return no_change_btn
+# def activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request: gr.Request):
+#     logger.info(f"activate_user_submit_btn. ip: {request.client.host}")
+#     if state is not None: 
+#         # if len(user_answer) <= 0 or len(user_reason) <= 0 or len(user_name) <= 0 or len(user_PID) <= 0:  # nothing entered
+#         #     return no_change_btn
+#         if len(user_name) > 0 and len(user_PID) > 0 and len(user_answer) > 0:  # entered user_name, user_PID, user_answer
+#             return enable_btn
+#         elif len(user_name) > 0 and len(user_PID) > 0 and len(user_reason) > 0 : # entered user_name, user_PID, user_reason
+#             return enable_btn
+#         else:
+#             return disable_btn
+#     else:
+#         return disable_btn
 
 def vote_last_response(state, vote_type, model_selector, request: gr.Request):
     with open(get_conv_log_filename(), "a") as fout:
@@ -234,22 +246,25 @@ def vote_last_response(state, vote_type, model_selector, request: gr.Request):
 def upvote_last_response(state, model_selector, user_answer, user_reason, user_name, user_PID, request: gr.Request):
     logger.info(f"upvote. ip: {request.client.host}")
     vote_last_response(state, "upvote", model_selector, request)
-    user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
-    return ("",) + (disable_btn,) * 3 + (user_submit_btn,)
+    # user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
+    
+    return ("",) + (disable_btn,) * 3 + (enable_btn,)
 
 
 def downvote_last_response(state, model_selector, user_answer, user_reason, user_name, user_PID, request: gr.Request):
     logger.info(f"downvote. ip: {request.client.host}")
     vote_last_response(state, "downvote", model_selector, request)
-    user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
-    return ("",) + (disable_btn,) * 3  + (user_submit_btn,)
+    # user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
+    
+    return ("",) + (disable_btn,) * 3  + (enable_btn,) 
 
 
 def flag_last_response(state, model_selector, user_answer, user_reason, user_name, user_PID, request: gr.Request):
     logger.info(f"flag. ip: {request.client.host}")
     vote_last_response(state, "flag", model_selector, request)
-    user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
-    return ("",) + (disable_btn,) * 3  + (user_submit_btn,)
+    # user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
+
+    return ("",) + (disable_btn,) * 3  + (enable_btn,)
 
 
 def regenerate(state, request: gr.Request):
@@ -713,26 +728,26 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
         gr.Markdown(acknowledgment_md)
 
     # Register listeners
-    user_answer.change(
-        activate_user_submit_btn,
-        [state, user_answer, user_reason, user_name, user_PID],
-        [user_submit_btn],
-    )
-    user_reason.change(
-        activate_user_submit_btn,
-        [state, user_answer, user_reason, user_name, user_PID],
-        [user_submit_btn],
-    )
-    user_name.change(
-        activate_user_submit_btn,
-        [state, user_answer, user_reason, user_name, user_PID],
-        [user_submit_btn],
-    )
-    user_PID.change(
-        activate_user_submit_btn,
-        [state, user_answer, user_reason, user_name, user_PID],
-        [user_submit_btn],
-    )
+    # user_answer.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
+    # user_reason.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
+    # user_name.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
+    # user_PID.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
     user_submit_btn.click(
         take_user_feedback,
         [state, user_answer, user_reason, user_name, user_PID, model_selector],
@@ -798,7 +813,7 @@ def build_demo(models):
             raise ValueError(f"Unknown model list mode: {args.model_list_mode}")
 
         if args.show_terms_of_use:
-            load_js = get_window_url_params_with_tos_js
+            load_js = get_window_url_params_js
         else:
             load_js = get_window_url_params_js
 
