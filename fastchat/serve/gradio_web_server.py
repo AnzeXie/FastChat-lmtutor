@@ -683,9 +683,9 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
         )
         max_output_tokens = gr.Slider(
             minimum=16,
-            maximum=1024,
+            maximum=(1024),
             value=512,
-            step=64,
+            step=1,
             interactive=True,
             label="Max output tokens",
         )
