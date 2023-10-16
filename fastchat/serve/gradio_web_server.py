@@ -634,7 +634,7 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
 
     state = gr.State()
     model_description_md = get_model_description_md(models)
-    gr.Markdown(notice_markdown + model_description_md, elem_id="notice_markdown")
+    # gr.Markdown(notice_markdown + model_description_md, elem_id="notice_markdown")
 
     with gr.Row(elem_id="model_selector_row"):
         model_selector = gr.Dropdown(
