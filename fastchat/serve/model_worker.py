@@ -388,7 +388,7 @@ async def api_generate_stream(request: Request):
     # retrieved_docs = lmtutor.similarity_search_thres(this_input_text)
     # logger.info(f"retrieved_docs: {retrieved_docs}")
     text = f"{chat_hist} USER: Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {this_input_text} ASSISTANT:"
-    # logger.info(f"text: {text}")
+    logger.info(f"text: {text}")
     params['prompt'] = text
     print(params)
 
