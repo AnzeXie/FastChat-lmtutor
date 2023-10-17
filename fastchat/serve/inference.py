@@ -346,8 +346,10 @@ def chat_loop(
     conv = None
 
     lmtutor = LLMLangChainTutor(embedding='instruct_embedding', device='cuda')
-    lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
-    lmtutor.generate_vector_store()
+    # lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
+    # lmtutor.generate_vector_store()
+    lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector/")
+    # print("loaded vectorstore")
 
     while True:
         if not history or not conv:
@@ -442,7 +444,9 @@ def chat_loop(
             reload_conv(conv)
             continue
         
-        retrieved_docs = lmtutor.similarity_search(inp)
+        # print("Working on similarity search")
+        # retrieved_docs = lmtutor.similarity_search_topk(inp, k=10)
+        retrieved_docs = lmtutor.similarity_search_thres(inp)
         inp = f"Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {inp}"
         # print(inp)
         conv.append_message(conv.roles[0], inp)

@@ -656,8 +656,8 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
     with gr.Column(scale=20):
         textbox = gr.TextArea(
             show_label=True,
-            label="Enter your prompt here and press ENTER",
-            placeholder="Enter your prompt here and press ENTER",
+            label="Enter your prompt here and press SHIFT + ENTER",
+            placeholder="Enter your prompt here and press SHIFT + ENTER",
             container=True,
             elem_id="input_box",
             lines=5,

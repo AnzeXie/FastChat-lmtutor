@@ -48,9 +48,10 @@ from fastchat.utils import build_logger, pretty_print_semaphore, get_context_len
 
 from .llm_langchain_tutor import LLMLangChainTutor
 lmtutor = LLMLangChainTutor(embedding='instruct_embedding', embed_device='cuda:0', llm_device="cuda:0")
-# lmtutor.load_document(doc_path="/home/yuheng/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
+# lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
 # lmtutor.generate_vector_store()
-lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-291-vector")
+lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector/")
+# print("loaded vectorstore")
 
 worker_id = str(uuid.uuid4())[:8]
 logger = build_logger("model_worker", f"model_worker_{worker_id}.log")
@@ -382,8 +383,12 @@ async def api_generate_stream(request: Request):
     # print(params)
     this_input_text = params['prompt'].split('USER:')[-1].split("ASSISTANT:")[0]
     chat_hist = 'USER: '.join(params['prompt'].split('USER:')[:-1])
-    retrieved_docs = lmtutor.similarity_search(this_input_text)
+    # logger.info("Working on similarity search")
+    # retrieved_docs = lmtutor.similarity_search_topk(this_input_text, k=10)
+    retrieved_docs = lmtutor.similarity_search_thres(this_input_text)
+    # logger.info(f"retrieved_docs: {retrieved_docs}")
     text = f"{chat_hist} USER: Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {this_input_text} ASSISTANT:"
+    # logger.info(f"text: {text}")
     params['prompt'] = text
     print(params)
 
