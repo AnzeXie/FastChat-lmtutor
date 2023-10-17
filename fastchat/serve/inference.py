@@ -348,7 +348,7 @@ def chat_loop(
     lmtutor = LLMLangChainTutor(embedding='instruct_embedding', device='cuda')
     # lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
     # lmtutor.generate_vector_store()
-    lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector/")
+    lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector-w-291")
     # print("loaded vectorstore")
 
     while True:

@@ -50,7 +50,7 @@ from .llm_langchain_tutor import LLMLangChainTutor
 lmtutor = LLMLangChainTutor(embedding='instruct_embedding', embed_device='cuda:0', llm_device="cuda:0")
 # lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
 # lmtutor.generate_vector_store()
-lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector/")
+lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector-w-291")
 # print("loaded vectorstore")
 
 worker_id = str(uuid.uuid4())[:8]

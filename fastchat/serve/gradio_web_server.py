@@ -634,6 +634,7 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
 
     state = gr.State()
     model_description_md = get_model_description_md(models)
+    # model_description_md = "\n\nLMTutor: a tutor chatbot built based on vicuna-13b by LMTutor-org"
     gr.Markdown(notice_markdown + model_description_md, elem_id="notice_markdown")
 
     with gr.Row(elem_id="model_selector_row"):
@@ -660,7 +661,7 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
             placeholder="Enter your prompt here and press SHIFT + ENTER",
             container=True,
             elem_id="input_box",
-            lines=5,
+            lines=3,
             max_lines=30,
             autofocus=True,
         )
@@ -708,7 +709,7 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
             placeholder="Enter your answer area",
             container=False,
             elem_id="input_box",
-            lines=1,
+            lines=2,
             max_lines=30,
         )
     
@@ -718,7 +719,7 @@ Wecome to use LMTutor for answering your questions. You can ask it about the que
             placeholder="Enter your expalanation",
             container=False,
             elem_id="input_box",
-            lines=1,
+            lines=2,
             max_lines=30,
         )
 
