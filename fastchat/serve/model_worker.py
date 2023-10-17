@@ -384,8 +384,8 @@ async def api_generate_stream(request: Request):
     this_input_text = params['prompt'].split('USER:')[-1].split("ASSISTANT:")[0]
     chat_hist = 'USER: '.join(params['prompt'].split('USER:')[:-1])
     # logger.info("Working on similarity search")
-    # retrieved_docs = lmtutor.similarity_search_topk(this_input_text, k=10)
-    retrieved_docs = lmtutor.similarity_search_thres(this_input_text)
+    retrieved_docs = lmtutor.similarity_search_topk(this_input_text, k=5)
+    # retrieved_docs = lmtutor.similarity_search_thres(this_input_text)
     # logger.info(f"retrieved_docs: {retrieved_docs}")
     text = f"{chat_hist} USER: Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {this_input_text} ASSISTANT:"
     # logger.info(f"text: {text}")

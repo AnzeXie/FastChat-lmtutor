@@ -445,8 +445,8 @@ def chat_loop(
             continue
         
         # print("Working on similarity search")
-        # retrieved_docs = lmtutor.similarity_search_topk(inp, k=10)
-        retrieved_docs = lmtutor.similarity_search_thres(inp)
+        retrieved_docs = lmtutor.similarity_search_topk(inp, k=5)
+        # retrieved_docs = lmtutor.similarity_search_thres(inp)
         inp = f"Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {inp}"
         # print(inp)
         conv.append_message(conv.roles[0], inp)
