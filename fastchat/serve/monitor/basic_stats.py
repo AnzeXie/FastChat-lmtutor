@@ -11,22 +11,29 @@ import plotly.express as px
 import plotly.graph_objects as go
 from tqdm import tqdm
 
+from fastchat.constants import LOGDIR
+import glob
+
 
 NUM_SERVERS = 14
 
 
 def get_log_files(max_num_files=None):
-    dates = []
-    for month in range(4, 9):
-        for day in range(1, 33):
-            dates.append(f"2023-{month:02d}-{day:02d}")
+    # dates = []
+    # for month in range(4, 9):
+    #     for day in range(1, 33):
+    #         dates.append(f"2023-{month:02d}-{day:02d}")
 
-    filenames = []
-    for d in dates:
-        for i in range(NUM_SERVERS):
-            name = os.path.expanduser(f"~/fastchat_logs/server{i}/{d}-conv.json")
-            if os.path.exists(name):
-                filenames.append(name)
+    # filenames = []
+    # for d in dates:
+    #     for i in range(NUM_SERVERS):
+    #         name = os.path.expanduser(f"~/fastchat_logs/server{i}/{d}-conv.json")
+    #         if os.path.exists(name):
+    #             filenames.append(name)
+    
+    file_format = "2023-*-*-conv.json"
+    filenames = glob.glob(os.path.join(LOGDIR, file_format))   
+    
     max_num_files = max_num_files or len(filenames)
     filenames = filenames[-max_num_files:]
     return filenames
@@ -82,7 +89,7 @@ def report_basic_stats(log_files):
     now_t = df_all["tstamp"].max()
     df_1_hour = df_all[df_all["tstamp"] > (now_t - 3600)]
     df_1_day = df_all[df_all["tstamp"] > (now_t - 3600 * 24)]
-    anony_vote_df_all = get_anony_vote_df(df_all)
+    # anony_vote_df_all = get_anony_vote_df(df_all)
 
     # Chat trends
     chat_dates = [
@@ -92,29 +99,29 @@ def report_basic_stats(log_files):
         for x in df_all[df_all["type"] == "chat"]["tstamp"]
     ]
     chat_dates_counts = pd.value_counts(chat_dates)
-    vote_dates = [
-        datetime.datetime.fromtimestamp(x, tz=timezone("US/Pacific")).strftime(
-            "%Y-%m-%d"
-        )
-        for x in anony_vote_df_all["tstamp"]
-    ]
-    vote_dates_counts = pd.value_counts(vote_dates)
+    # vote_dates = [
+    #     datetime.datetime.fromtimestamp(x, tz=timezone("US/Pacific")).strftime(
+    #         "%Y-%m-%d"
+    #     )
+    #     for x in anony_vote_df_all["tstamp"]
+    # ]
+    # vote_dates_counts = pd.value_counts(vote_dates)
     chat_dates_bar = go.Figure(
         data=[
-            go.Bar(
-                name="Anony. Vote",
-                x=vote_dates_counts.index,
-                y=vote_dates_counts,
-                text=[f"{val:.0f}" for val in vote_dates_counts],
-                textposition="auto",
-            ),
+            # go.Bar(
+            #     name="Anony. Vote",
+            #     x=vote_dates_counts.index,
+            #     y=vote_dates_counts,
+            #     text=[f"{val:.0f}" for val in vote_dates_counts],
+            #     textposition="auto",
+            # ),
             go.Bar(
                 name="Chat",
                 x=chat_dates_counts.index,
                 y=chat_dates_counts,
                 text=[f"{val:.0f}" for val in chat_dates_counts],
                 textposition="auto",
-            ),
+            )
         ]
     )
     chat_dates_bar.update_layout(
@@ -147,18 +154,18 @@ def report_basic_stats(log_files):
     )
     action_hist_md = action_hist.to_markdown(index=False, tablefmt="github")
 
-    # Anony vote counts
-    anony_vote_hist_all = anony_vote_df_all["type"].value_counts()
-    anony_vote_df_1_day = get_anony_vote_df(df_1_day)
-    anony_vote_hist_1_day = anony_vote_df_1_day["type"].value_counts()
-    # anony_vote_df_1_hour = get_anony_vote_df(df_1_hour)
-    # anony_vote_hist_1_hour = anony_vote_df_1_hour["type"].value_counts()
-    anony_vote_hist = merge_counts(
-        [anony_vote_hist_all, anony_vote_hist_1_day],
-        on="type",
-        names=["All", "Last Day"],
-    )
-    anony_vote_hist_md = anony_vote_hist.to_markdown(index=False, tablefmt="github")
+    # # Anony vote counts
+    # anony_vote_hist_all = anony_vote_df_all["type"].value_counts()
+    # anony_vote_df_1_day = get_anony_vote_df(df_1_day)
+    # anony_vote_hist_1_day = anony_vote_df_1_day["type"].value_counts()
+    # # anony_vote_df_1_hour = get_anony_vote_df(df_1_hour)
+    # # anony_vote_hist_1_hour = anony_vote_df_1_hour["type"].value_counts()
+    # anony_vote_hist = merge_counts(
+    #     [anony_vote_hist_all, anony_vote_hist_1_day],
+    #     on="type",
+    #     names=["All", "Last Day"],
+    # )
+    # anony_vote_hist_md = anony_vote_hist.to_markdown(index=False, tablefmt="github")
 
     # Last 24 hours
     chat_1_day = df_1_day[df_1_day["type"] == "chat"]
@@ -190,7 +197,7 @@ def report_basic_stats(log_files):
         "chat_dates_bar": chat_dates_bar,
         "model_hist_md": model_hist_md,
         "action_hist_md": action_hist_md,
-        "anony_vote_hist_md": anony_vote_hist_md,
+        # "anony_vote_hist_md": anony_vote_hist_md,
         "num_chats_last_24_hours": last_24_hours_md,
         "last_updated_datetime": last_updated_datetime,
     }
@@ -206,5 +213,5 @@ if __name__ == "__main__":
 
     print(basic_stats["action_hist_md"] + "\n")
     print(basic_stats["model_hist_md"] + "\n")
-    print(basic_stats["anony_vote_hist_md"] + "\n")
+    # print(basic_stats["anony_vote_hist_md"] + "\n")
     print(basic_stats["num_chats_last_24_hours"] + "\n")

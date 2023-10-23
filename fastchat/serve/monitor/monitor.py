@@ -52,15 +52,15 @@ def update_elo_components(max_num_files, elo_results_file):
     log_files = get_log_files(max_num_files)
 
     # Leaderboard
-    if elo_results_file is None:  # Do live update
-        battles = clean_battle_data(log_files)
-        elo_results = report_elo_analysis_results(battles)
+    # if elo_results_file is None:  # Do live update
+    #     battles = clean_battle_data(log_files)
+    #     elo_results = report_elo_analysis_results(battles)
 
-        leader_component_values[0] = make_leaderboard_md_live(elo_results)
-        leader_component_values[1] = elo_results["win_fraction_heatmap"]
-        leader_component_values[2] = elo_results["battle_count_heatmap"]
-        leader_component_values[3] = elo_results["bootstrap_elo_rating"]
-        leader_component_values[4] = elo_results["average_win_rate_bar"]
+    #     leader_component_values[0] = make_leaderboard_md_live(elo_results)
+    #     leader_component_values[1] = elo_results["win_fraction_heatmap"]
+    #     leader_component_values[2] = elo_results["battle_count_heatmap"]
+    #     leader_component_values[3] = elo_results["bootstrap_elo_rating"]
+    #     leader_component_values[4] = elo_results["average_win_rate_bar"]
 
     # Basic stats
     basic_stats = report_basic_stats(log_files)
@@ -69,8 +69,8 @@ def update_elo_components(max_num_files, elo_results_file):
     md1 = "### Action Histogram\n"
     md1 += basic_stats["action_hist_md"] + "\n"
 
-    md2 = "### Anony. Vote Histogram\n"
-    md2 += basic_stats["anony_vote_hist_md"] + "\n"
+    # md2 = "### Anony. Vote Histogram\n"
+    # md2 += basic_stats["anony_vote_hist_md"] + "\n"
 
     md3 = "### Model Call Histogram\n"
     md3 += basic_stats["model_hist_md"] + "\n"
@@ -81,9 +81,9 @@ def update_elo_components(max_num_files, elo_results_file):
     basic_component_values[0] = md0
     basic_component_values[1] = basic_stats["chat_dates_bar"]
     basic_component_values[2] = md1
-    basic_component_values[3] = md2
-    basic_component_values[4] = md3
-    basic_component_values[5] = md4
+    # basic_component_values[3] = md2
+    basic_component_values[3] = md3
+    basic_component_values[4] = md4
 
 
 def update_worker(max_num_files, interval, elo_results_file):
@@ -142,23 +142,23 @@ def load_leaderboard_table_csv(filename, add_hyperlink=True):
 
 
 def build_basic_stats_tab():
-    empty = "Loading ..."
-    basic_component_values[:] = [empty, None, empty, empty, empty, empty]
+    # empty = "Loading ..."
+    # basic_component_values[:] = [empty, None, empty, empty, empty, empty]
 
-    md0 = gr.Markdown(empty)
+    md0 = gr.Markdown(basic_component_values[0])
     gr.Markdown("#### Figure 1: Number of model calls and votes")
-    plot_1 = gr.Plot(show_label=False)
+    plot_1 = gr.Plot(basic_component_values[1], show_label=False)
     with gr.Row():
         with gr.Column():
-            md1 = gr.Markdown(empty)
+            md1 = gr.Markdown(basic_component_values[2])
+        # with gr.Column():
+        #     md2 = gr.Markdown(basic_component_values[3])
+    # with gr.Row():
         with gr.Column():
-            md2 = gr.Markdown(empty)
-    with gr.Row():
+            md3 = gr.Markdown(basic_component_values[3])
         with gr.Column():
-            md3 = gr.Markdown(empty)
-        with gr.Column():
-            md4 = gr.Markdown(empty)
-    return [md0, plot_1, md1, md2, md3, md4]
+            md4 = gr.Markdown(basic_component_values[4])
+    return [md0, plot_1, md1, md3, md4]
 
 
 def build_leaderboard_tab(elo_results_file, leaderboard_table_file):
@@ -252,19 +252,20 @@ def build_demo(elo_results_file, leaderboard_table_file):
         theme=gr.themes.Base(text_size=text_size),
     ) as demo:
         with gr.Tabs() as tabs:
-            with gr.Tab("Leaderboard", id=0):
-                leader_components = build_leaderboard_tab(
-                    elo_results_file, leaderboard_table_file
-                )
+            # with gr.Tab("Leaderboard", id=0):
+            #     leader_components = build_leaderboard_tab(
+            #         elo_results_file, leaderboard_table_file
+            #     )
 
             with gr.Tab("Basic Stats", id=1):
                 basic_components = build_basic_stats_tab()
 
-        url_params = gr.JSON(visible=False)
+        url_params = gr.JSON(visible=True)
         demo.load(
             load_demo,
             [url_params],
-            basic_components + leader_components,
+            # basic_components + leader_components,
+            basic_components,
             _js=get_window_url_params_js,
         )
 
