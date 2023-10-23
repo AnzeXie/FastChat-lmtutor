@@ -73,9 +73,9 @@ def get_anony_vote_df(df):
 
 
 def merge_counts(series, on, names):
-    ret = pd.merge(series[0], series[1], on=on)
+    ret = pd.merge(series[0], series[1], on=on, how="outer")
     for i in range(2, len(series)):
-        ret = pd.merge(ret, series[i], on=on)
+        ret = pd.merge(ret, series[i], on=on, how="outer")
     ret = ret.reset_index()
     old_names = list(ret.columns)[-len(series) :]
     rename = {old_name: new_name for old_name, new_name in zip(old_names, names)}
@@ -152,6 +152,7 @@ def report_basic_stats(log_files):
         on="type",
         names=["All", "Last Day", "Last Hour"],
     )
+    action_hist = action_hist.fillna(0)
     action_hist_md = action_hist.to_markdown(index=False, tablefmt="github")
 
     # # Anony vote counts
