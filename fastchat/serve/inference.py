@@ -40,6 +40,7 @@ from fastchat.modules.gptq import GptqConfig
 from fastchat.modules.exllama import ExllamaConfig
 from fastchat.utils import is_partial_stop, is_sentence_complete, get_context_length
 
+from .llm_langchain_tutor import LLMLangChainTutor
 
 def prepare_logits_processor(
     temperature: float, repetition_penalty: float, top_p: float, top_k: int
@@ -357,6 +358,12 @@ def chat_loop(
 
     conv = None
 
+    lmtutor = LLMLangChainTutor(embedding='instruct_embedding', device='cuda')
+    # lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
+    # lmtutor.generate_vector_store()
+    lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector-w-291")
+    # print("loaded vectorstore")
+
     while True:
         if not history or not conv:
             conv = new_chat()
@@ -449,10 +456,16 @@ def chat_loop(
             conv.messages = new_conv["messages"]
             reload_conv(conv)
             continue
-
+        
+        # print("Working on similarity search")
+        retrieved_docs = lmtutor.similarity_search_topk(inp, k=5)
+        # retrieved_docs = lmtutor.similarity_search_thres(inp)
+        inp = f"Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {inp}"
+        # print(inp)
         conv.append_message(conv.roles[0], inp)
         conv.append_message(conv.roles[1], None)
         prompt = conv.get_prompt()
+        # print(prompt)
 
         if is_codet5p:  # codet5p is a code completion model.
             prompt = inp

@@ -45,6 +45,8 @@ def main():
         "stop_token_ids": conv.stop_token_ids,
         "echo": False,
     }
+    
+    print("sending reuqest.post")
     response = requests.post(
         worker_addr + "/worker_generate_stream",
         headers=headers,

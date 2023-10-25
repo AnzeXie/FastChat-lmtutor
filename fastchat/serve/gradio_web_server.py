@@ -186,6 +186,51 @@ def load_demo(url_params, request: gr.Request):
     return load_demo_single(models, url_params)
 
 
+def take_user_feedback(state, user_answer, user_reason, user_name, user_PID, model_selector, request: gr.Request):
+    logger.info(f"take_user_feedback. ip: {request.client.host}")
+    
+    if len(user_PID) <= 0:
+        raise gr.Error("Please enter PID.")
+    
+    if len(user_name) <= 0:
+        raise gr.Error("Please enter name.")
+    
+    if len(user_answer) <= 0 and len(user_reason) <= 0:
+        raise gr.Error("Please enter answer or reason.")
+    
+    
+    # save user feedback
+    with open(get_conv_log_filename(), "a") as fout:
+        data = {
+            "tstamp": round(time.time(), 4),
+            "type": "user_feedback",
+            "model": model_selector,
+            "state": state.dict(),
+            "ip": request.client.host,
+            "user_answer": user_answer,
+            "user_reason": user_reason,
+            "user_name": user_name,
+            "user_PID": user_PID,
+        }
+        fout.write(json.dumps(data) + "\n")
+    gr.Info("Feedback submitted. Thank you!")
+
+    return state, disable_btn
+
+# def activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request: gr.Request):
+#     logger.info(f"activate_user_submit_btn. ip: {request.client.host}")
+#     if state is not None: 
+#         # if len(user_answer) <= 0 or len(user_reason) <= 0 or len(user_name) <= 0 or len(user_PID) <= 0:  # nothing entered
+#         #     return no_change_btn
+#         if len(user_name) > 0 and len(user_PID) > 0 and len(user_answer) > 0:  # entered user_name, user_PID, user_answer
+#             return enable_btn
+#         elif len(user_name) > 0 and len(user_PID) > 0 and len(user_reason) > 0 : # entered user_name, user_PID, user_reason
+#             return enable_btn
+#         else:
+#             return disable_btn
+#     else:
+#         return disable_btn
+
 def vote_last_response(state, vote_type, model_selector, request: gr.Request):
     with open(get_conv_log_filename(), "a") as fout:
         data = {
@@ -198,22 +243,28 @@ def vote_last_response(state, vote_type, model_selector, request: gr.Request):
         fout.write(json.dumps(data) + "\n")
 
 
-def upvote_last_response(state, model_selector, request: gr.Request):
+def upvote_last_response(state, model_selector, user_answer, user_reason, user_name, user_PID, request: gr.Request):
     logger.info(f"upvote. ip: {request.client.host}")
     vote_last_response(state, "upvote", model_selector, request)
-    return ("",) + (disable_btn,) * 3
+    # user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
+    
+    return ("",) + (disable_btn,) * 3 + (enable_btn,)
 
 
-def downvote_last_response(state, model_selector, request: gr.Request):
+def downvote_last_response(state, model_selector, user_answer, user_reason, user_name, user_PID, request: gr.Request):
     logger.info(f"downvote. ip: {request.client.host}")
     vote_last_response(state, "downvote", model_selector, request)
-    return ("",) + (disable_btn,) * 3
+    # user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
+    
+    return ("",) + (disable_btn,) * 3  + (enable_btn,) 
 
 
-def flag_last_response(state, model_selector, request: gr.Request):
+def flag_last_response(state, model_selector, user_answer, user_reason, user_name, user_PID, request: gr.Request):
     logger.info(f"flag. ip: {request.client.host}")
     vote_last_response(state, "flag", model_selector, request)
-    return ("",) + (disable_btn,) * 3
+    # user_submit_btn = activate_user_submit_btn(state, user_answer, user_reason, user_name, user_PID, request)
+
+    return ("",) + (disable_btn,) * 3  + (enable_btn,)
 
 
 def regenerate(state, request: gr.Request):
@@ -225,7 +276,7 @@ def regenerate(state, request: gr.Request):
 def clear_history(request: gr.Request):
     logger.info(f"clear_history. ip: {request.client.host}")
     state = None
-    return (state, [], "") + (disable_btn,) * 5
+    return (state, [], "") + (disable_btn,) * 6
 
 
 def add_text(state, model_selector, text, request: gr.Request):
@@ -375,6 +426,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
                 disable_btn,
                 enable_btn,
                 enable_btn,
+                # disable_btn,
             )
             return
 
@@ -419,6 +471,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
                     disable_btn,
                     enable_btn,
                     enable_btn,
+                    # disable_btn,
                 )
                 return
         output = data["text"].strip()
@@ -437,6 +490,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
             disable_btn,
             enable_btn,
             enable_btn,
+            # disable_btn,
         )
         return
     except Exception as e:
@@ -450,6 +504,7 @@ def bot_response(state, temperature, top_p, max_new_tokens, request: gr.Request)
             disable_btn,
             enable_btn,
             enable_btn,
+            # disable_btn,
         )
         return
 
@@ -550,14 +605,36 @@ def build_single_model_ui(models, add_promotion_links=False):
     )
 
     notice_markdown = f"""
-# 🏔️ Chat with Open Large Language Models
-{promotion}
+# 🤖 LMTutor for DSC250 Advanced Data Mining
+Wecome to use LMTutor for answering your questions. You can ask it about the questions in the course material, logistics, etc. No need to wait for the TA's response! LMTutor answers your question within seconds!
+"""
+### How to use
+# * It's easy. Just type your questions in the chatbox below and have a conversation with it just like you are talking to the TA.
+# * Based on the answers provided by LMTutor, you can ask follow-up questions or start a new conversation.
+# * Based on how satisfied you are with the answer, you can choose to either upvote, downvote or flag (for toxic answers) the answers generated by LMTutor. Make sure to do this step with honesty and integrity as your responses will help us improve LMTutor for you as well as your peers.
 
-### Choose a model to chat with
+    contributing_rules = f"""
+### Help the AI Tutor Improve: Your Contribution
+* After having a conversation with LMTutor (that started with a question that you asked it), if you feel that the answer you received is incorrect or inaccurate, you can use your initial question as a submission.
+* First make a vote to the question. Then try to find and compile an answer to your original question and submit it in the textbox under the chatbot along with your name, PID and a brief explanation for why your answer is better than the ones generated by LMTutor.
+* You need to enter both your name and your PID in order to submit a feedback.
+* Please DO NOT refresh the page or conversation with the chatbot before submitting your answer.
+* That's it! LMTutor will record your conversation history, your details and the answer you submitted, after which someone will evaluate your submission.
+"""
+
+    contacts = f"""
+### If you encounter any issue or bug, please contact us:
+* Hao Zhang: haozhang at ucsd.edu 
+* Pushkar Bhuse: pbhuse at ucsd.edu
+* Yuheng Zha: yzha at ucsd.edu 
+* Tiffany Yu: z5yu at ucsd.edu
+* Anze Xie: a1xie at ucsd.edu 
+* Licheng Hu: l2hu at ucsd.edu
 """
 
     state = gr.State()
     model_description_md = get_model_description_md(models)
+    # model_description_md = "\n\nLMTutor: a tutor chatbot built based on vicuna-13b by LMTutor-org"
     gr.Markdown(notice_markdown + model_description_md, elem_id="notice_markdown")
 
     with gr.Row(elem_id="model_selector_row"):
@@ -573,25 +650,23 @@ def build_single_model_ui(models, add_promotion_links=False):
         elem_id="chatbot",
         label="Scroll down and start chatting",
         height=550,
+        show_copy_button=True,
     )
-    with gr.Row():
-        with gr.Column(scale=20):
-            textbox = gr.Textbox(
-                show_label=False,
-                placeholder="Enter your prompt here and press ENTER",
-                container=False,
-                elem_id="input_box",
-            )
-        with gr.Column(scale=1, min_width=50):
-            send_btn = gr.Button(value="Send", variant="primary")
 
-    with gr.Row() as button_row:
-        upvote_btn = gr.Button(value="👍  Upvote", interactive=False)
-        downvote_btn = gr.Button(value="👎  Downvote", interactive=False)
-        flag_btn = gr.Button(value="⚠️  Flag", interactive=False)
-        regenerate_btn = gr.Button(value="🔄  Regenerate", interactive=False)
-        clear_btn = gr.Button(value="🗑️  Clear history", interactive=False)
-
+    # with gr.Row():
+    with gr.Column(scale=20):
+        textbox = gr.TextArea(
+            show_label=True,
+            label="Enter your prompt here and press SHIFT + ENTER",
+            placeholder="Enter your prompt here and press SHIFT + ENTER",
+            container=True,
+            elem_id="input_box",
+            lines=3,
+            max_lines=30,
+            autofocus=True,
+        )
+    with gr.Column(scale=1, min_width=50):
+        send_btn = gr.Button(value="Send", variant="primary", size="lg")
     with gr.Accordion("Parameters", open=False) as parameter_row:
         temperature = gr.Slider(
             minimum=0.0,
@@ -611,39 +686,117 @@ def build_single_model_ui(models, add_promotion_links=False):
         )
         max_output_tokens = gr.Slider(
             minimum=16,
-            maximum=1024,
-            value=512,
-            step=64,
+            maximum=(1024)*16,
+            value=1024,
+            step=1,
             interactive=True,
             label="Max output tokens",
         )
 
+    with gr.Row():
+        gr.Markdown(contributing_rules, elem_id="contributing_rules")    
+    
+    with gr.Row() as button_row:
+        upvote_btn = gr.Button(value="👍  Upvote", interactive=False)
+        downvote_btn = gr.Button(value="👎  Downvote", interactive=False)
+        flag_btn = gr.Button(value="⚠️  Flag", interactive=False)
+        regenerate_btn = gr.Button(value="🔄  Regenerate", interactive=False)
+        clear_btn = gr.Button(value="🗑️  Clear history", interactive=False)
+
+    with gr.Row():
+        user_answer = gr.TextArea(
+            show_label=True,
+            placeholder="Enter your answer area",
+            container=False,
+            elem_id="input_box",
+            lines=2,
+            max_lines=30,
+        )
+    
+    with gr.Row():
+        user_reason = gr.TextArea(
+            show_label=False,
+            placeholder="Enter your expalanation",
+            container=False,
+            elem_id="input_box",
+            lines=2,
+            max_lines=30,
+        )
+
+    with gr.Row():
+        with gr.Column(scale=15):
+            user_name = gr.Textbox(
+                show_label=False,
+                placeholder="Enter your name",
+                container=False,
+                elem_id="input_box",
+            )
+        with gr.Column(scale=15):
+            user_PID = gr.Textbox(
+                show_label=False,
+                placeholder="Enter your PID",
+                container=False,
+                elem_id="input_box",
+            )
+        with gr.Column(scale=5, min_width=50):
+            user_submit_btn = gr.Button(value="Submit report", variant="primary", interactive=False)
+
+    
+
     if add_promotion_links:
         gr.Markdown(acknowledgment_md)
+    
+    gr.Markdown(contacts, elem_id="contacts")
 
     # Register listeners
+    # user_answer.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
+    # user_reason.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
+    # user_name.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
+    # user_PID.change(
+    #     activate_user_submit_btn,
+    #     [state, user_answer, user_reason, user_name, user_PID],
+    #     [user_submit_btn],
+    # )
+    user_submit_btn.click(
+        take_user_feedback,
+        [state, user_answer, user_reason, user_name, user_PID, model_selector],
+        [state, user_submit_btn],
+    )
+
     btn_list = [upvote_btn, downvote_btn, flag_btn, regenerate_btn, clear_btn]
     upvote_btn.click(
         upvote_last_response,
-        [state, model_selector],
-        [textbox, upvote_btn, downvote_btn, flag_btn],
+        [state, model_selector, user_answer, user_reason, user_name, user_PID],
+        [textbox, upvote_btn, downvote_btn, flag_btn, user_submit_btn],
     )
     downvote_btn.click(
         downvote_last_response,
-        [state, model_selector],
-        [textbox, upvote_btn, downvote_btn, flag_btn],
+        [state, model_selector, user_answer, user_reason, user_name, user_PID],
+        [textbox, upvote_btn, downvote_btn, flag_btn, user_submit_btn],
     )
     flag_btn.click(
         flag_last_response,
-        [state, model_selector],
-        [textbox, upvote_btn, downvote_btn, flag_btn],
+        [state, model_selector, user_answer, user_reason, user_name, user_PID],
+        [textbox, upvote_btn, downvote_btn, flag_btn, user_submit_btn],
     )
     regenerate_btn.click(regenerate, state, [state, chatbot, textbox] + btn_list).then(
         bot_response,
         [state, temperature, top_p, max_output_tokens],
         [state, chatbot] + btn_list,
     )
-    clear_btn.click(clear_history, None, [state, chatbot, textbox] + btn_list)
+    clear_btn.click(clear_history, None, [state, chatbot, textbox] + btn_list + [user_submit_btn])
 
     model_selector.change(clear_history, None, [state, chatbot, textbox] + btn_list)
 
@@ -669,7 +822,7 @@ def build_single_model_ui(models, add_promotion_links=False):
 
 def build_demo(models):
     with gr.Blocks(
-        title="Chat with Open Large Language Models",
+        title="LMTutor for DSC250 Advanced Data Mining",
         theme=gr.themes.Default(),
         css=block_css,
     ) as demo:

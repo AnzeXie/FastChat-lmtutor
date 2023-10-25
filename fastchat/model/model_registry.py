@@ -86,6 +86,19 @@ register_model_info(
     "https://lmsys.org/blog/2023-03-30-vicuna/",
     "a chat assistant fine-tuned on user-shared conversations by LMSYS",
 )
+# register_model_info(
+#     [
+#         "vicuna-33b",
+#         "vicuna-33b-v1.3",
+#         "vicuna-13b",
+#         "vicuna-13b-v1.3",
+#         "vicuna-7b",
+#         "vicuna-7b-v1.3-lmtutor",
+#     ],
+#     "LMTutor",
+#     "https://github.com/lmtutor-org/LMTutor",
+#     "a DSC 250 tutor built based on vicuna-13b by LMTutor-org",
+# )
 register_model_info(
     ["wizardlm-70b", "wizardlm-30b", "wizardlm-13b"],
     "WizardLM",
