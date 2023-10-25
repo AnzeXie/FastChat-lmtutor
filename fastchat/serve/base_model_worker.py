@@ -202,6 +202,14 @@ async def api_generate_stream(request: Request):
 @app.post("/worker_generate")
 async def api_generate(request: Request):
     params = await request.json()
+
+    this_input_text = params['prompt'].split('USER:')[-1].split("ASSISTANT:")[0]
+    chat_hist = 'USER: '.join(params['prompt'].split('USER:')[:-1])
+    retrieved_docs = lmtutor.similarity_search_topk(this_input_text, k=5)
+    text = f"{chat_hist} USER: Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {this_input_text} ASSISTANT:"
+    logger.info(f"text: {text}")
+    params['prompt'] = text
+    
     await acquire_worker_semaphore()
     output = await asyncio.to_thread(worker.generate_gate, params)
     release_worker_semaphore()
