@@ -25,6 +25,12 @@ from fastchat.serve.model_worker import (
 )
 from fastchat.utils import get_context_length
 
+from .llm_langchain_tutor import LLMLangChainTutor
+lmtutor = LLMLangChainTutor(embedding='instruct_embedding', embed_device='cuda:0', llm_device="cuda:0")
+# lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
+# lmtutor.generate_vector_store()
+lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector-w-291")
+
 
 app = FastAPI()
 
@@ -163,6 +169,16 @@ def create_background_tasks(request_id):
 @app.post("/worker_generate_stream")
 async def api_generate_stream(request: Request):
     params = await request.json()
+    
+    this_input_text = params['prompt'].split('USER:')[-1].split("ASSISTANT:")[0]
+    chat_hist = 'USER: '.join(params['prompt'].split('USER:')[:-1])
+    retrieved_docs = lmtutor.similarity_search_topk(this_input_text, k=5)
+    text = f"{chat_hist} USER: Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {this_input_text} ASSISTANT:"
+    logger.info(f"used vectorstore")
+    logger.info(f"text: {text}")
+    print("used vectorstore")
+    params['prompt'] = text
+    
     await acquire_worker_semaphore()
     request_id = random_uuid()
     params["request_id"] = request_id

@@ -11,6 +11,12 @@ from fastchat.constants import WORKER_HEART_BEAT_INTERVAL
 from fastchat.conversation import Conversation
 from fastchat.utils import pretty_print_semaphore, build_logger
 
+from .llm_langchain_tutor import LLMLangChainTutor
+lmtutor = LLMLangChainTutor(embedding='instruct_embedding', embed_device='cuda:0', llm_device="cuda:0")
+# lmtutor.load_document(doc_path="/home/haozhang/axie/LMTutor/data/TextBooks", glob='./DSC140B-Lec01.pdf', chunk_size=100, chunk_overlap=10)
+# lmtutor.generate_vector_store()
+lmtutor.load_vector_store("/home/haozhang/axie/LMTutor/data/DSC-250-vector-w-291")
+
 
 worker = None
 logger = None
@@ -193,6 +199,16 @@ def create_background_tasks():
 @app.post("/worker_generate_stream")
 async def api_generate_stream(request: Request):
     params = await request.json()
+    
+    this_input_text = params['prompt'].split('USER:')[-1].split("ASSISTANT:")[0]
+    chat_hist = 'USER: '.join(params['prompt'].split('USER:')[:-1])
+    retrieved_docs = lmtutor.similarity_search_topk(this_input_text, k=5)
+    text = f"{chat_hist} USER: Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {this_input_text} ASSISTANT:"
+    logger.info(f"used vectorstore")
+    logger.info(f"text: {text}")
+    print("used vectorstore")
+    params['prompt'] = text
+    
     await acquire_worker_semaphore()
     generator = worker.generate_stream_gate(params)
     background_tasks = create_background_tasks()
@@ -202,14 +218,6 @@ async def api_generate_stream(request: Request):
 @app.post("/worker_generate")
 async def api_generate(request: Request):
     params = await request.json()
-
-    this_input_text = params['prompt'].split('USER:')[-1].split("ASSISTANT:")[0]
-    chat_hist = 'USER: '.join(params['prompt'].split('USER:')[:-1])
-    retrieved_docs = lmtutor.similarity_search_topk(this_input_text, k=5)
-    text = f"{chat_hist} USER: Context: {' '.join([each.page_content for each in retrieved_docs])}\n\n Base on the context, response to the text: {this_input_text} ASSISTANT:"
-    logger.info(f"text: {text}")
-    params['prompt'] = text
-    
     await acquire_worker_semaphore()
     output = await asyncio.to_thread(worker.generate_gate, params)
     release_worker_semaphore()
